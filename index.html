@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spy Mind - Social Edition</title>
+<link rel="manifest" href="manifest.json">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("Service Worker Registered"));
+  }
+</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        .chat-bubble { word-wrap: break-word; overflow-wrap: break-word; height: auto; min-height: fit-content; line-height: 1.5; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
+
+    <div id="app" class="w-full max-w-xl bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-800 flex flex-col h-[85vh]">
+        
+        <div id="api-screen" class="screen block p-8 flex flex-col h-full overflow-y-auto">
+            <h2 class="text-2xl font-black mb-2 text-center text-indigo-400 italic">API KEY MANAGER</h2>
+            <p class="text-center text-slate-500 text-[10px] mb-6 uppercase tracking-widest font-bold">Assign unique keys to each agent</p>
+            
+            <div class="space-y-4 mb-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-indigo-300 uppercase px-1">Main Game Engine Key</label>
+                    <input type="password" id="key-main" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" placeholder="Paste Key Here...">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Nova's Key</label>
+                        <input type="password" id="key-nova" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs focus:border-indigo-500 outline-none" placeholder="Key...">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Orion's Key</label>
+                        <input type="password" id="key-orion" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs focus:border-indigo-500 outline-none" placeholder="Key...">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Lyra's Key</label>
+                        <input type="password" id="key-lyra" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs focus:border-indigo-500 outline-none" placeholder="Key...">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Silas's Key</label>
+                        <input type="password" id="key-silas" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs focus:border-indigo-500 outline-none" placeholder="Key...">
+                    </div>
+                </div>
+                <p class="text-[9px] text-slate-600 text-center italic">Keys are saved locally on your device.</p>
+            </div>
+
+            <button onclick="saveAllKeys()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-black text-lg transition-all shadow-xl shadow-indigo-900/20 active:scale-95">
+                SAVE & CONTINUE
+            </button>
+        </div>
+
+        <div id="setup-screen" class="screen hidden p-8 flex flex-col h-full overflow-y-auto">
+            <h1 class="text-4xl font-black mb-2 text-center text-indigo-400 italic">SPY MIND</h1>
+            <p class="text-center text-slate-500 text-xs mb-8 uppercase tracking-widest font-bold">Llama 70B Social Deduction</p>
+            
+            <div class="space-y-4 mb-6">
+             <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-3 mb-4">
+    <div class="flex items-center justify-between">
+        <div><p class="font-bold text-[10px] uppercase text-indigo-300">Inform Spy</p></div>
+        <label class="switch"><input type="checkbox" id="spy-aware-toggle" checked><span class="slider"></span></label>
+    </div>
+    <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+        <div><p class="font-bold text-[10px] uppercase text-indigo-300">Final Echo</p></div>
+        <label class="switch"><input type="checkbox" id="echo-toggle" checked><span class="slider"></span></label>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <button onclick="showScreen('api-screen')" class="text-[10px] text-slate-500 hover:text-indigo-400 uppercase tracking-widest font-bold transition-colors">
+        Edit API Keys
+    </button>
+</div>
+
+
+                <button onclick="openSocialLounge()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    Social Lounge
+                </button>
+            </div>
+
+            <button onclick="startGame()" class="w-full mt-auto bg-indigo-600 hover:bg-indigo-500 py-5 rounded-xl font-black text-lg transition-all shadow-xl shadow-indigo-900/20 active:scale-95">
+                START MATCH
+            </button>
+        </div>
+
+        <div id="social-screen" class="screen hidden flex flex-col h-full">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xs font-bold text-indigo-400 uppercase">Social Lounge</h2>
+                <button onclick="showScreen('setup-screen')" class="text-xs text-slate-400 hover:text-white">Back to Menu</button>
+            </div>
+            <div id="social-chat-log" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
+                <div class="text-center text-[10px] text-slate-500 uppercase py-4">Nova, Orion, Lyra, and Silas are here.</div>
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800">
+                <div id="social-status" class="hidden text-[10px] text-indigo-400 mb-2 font-bold uppercase">...</div>
+                <div class="flex gap-2">
+                    <input type="text" id="social-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm" placeholder="Talk to the bots...">
+                    <button onclick="sendSocialMessage()" class="bg-indigo-600 p-3 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="reveal-screen" class="screen hidden p-8 text-center flex flex-col items-center justify-center h-full">
+            <h2 class="text-slate-500 text-xs uppercase tracking-widest mb-2">Secret Word</h2>
+            <div class="text-5xl font-black text-white mb-6 tracking-tight" id="your-word">???</div>
+            <p id="reveal-role-text" class="text-sm font-medium mb-10 px-6 text-slate-300"></p>
+            <button onclick="enterGame()" class="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-bold">I'm Ready</button>
+        </div>
+
+        <div id="game-screen" class="screen hidden flex flex-col h-full">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex justify-between items-center">
+                <div id="phase-indicator" class="text-xs font-bold text-indigo-400 uppercase">Phase: Hinting</div>
+                <div id="timer-box" class="hidden text-red-400 text-xs font-mono font-bold">01:00</div>
+            </div>
+            <div id="chat-log" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800">
+                <div id="ai-status" class="hidden text-[10px] text-indigo-400 mb-2 font-bold uppercase tracking-wider h-4">...</div>
+                <div id="user-input-area" class="hidden flex gap-2">
+                    <input type="text" id="user-msg" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" placeholder="Type message...">
+                    <button onclick="handleUserInput()" class="bg-indigo-600 p-3 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="voting-screen" class="screen hidden p-8 flex flex-col h-full items-center justify-center">
+            <h2 class="text-2xl font-bold mb-6">Who is the Spy?</h2>
+            <div id="vote-options" class="w-full space-y-2"></div>
+        </div>
+
+        <div id="result-screen" class="screen hidden p-8 overflow-y-auto text-center">
+            <h2 class="text-4xl font-bold mb-4" id="res-title">Results</h2>
+            <div class="bg-slate-800 p-6 rounded-xl mb-6 text-left space-y-2">
+                <p>Civilians' Word: <span id="res-civ" class="text-indigo-400 font-bold"></span></p>
+                <p>Spy's Word: <span id="res-spy" class="text-red-400 font-bold"></span></p>
+                <div class="border-t border-slate-700 mt-4 pt-4 text-xs space-y-1" id="vote-summary"></div>
+            </div>
+            <button onclick="location.reload()" class="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-bold">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // API KEY STORAGE LOGIC
+        const keyMap = JSON.parse(localStorage.getItem('spy_mind_keys')) || {
+            main: '', nova: '', orion: '', lyra: '', silas: ''
+        };
+
+        // Initialize UI with saved keys
+        window.onload = () => {
+            document.getElementById('key-main').value = keyMap.main;
+            document.getElementById('key-nova').value = keyMap.nova;
+            document.getElementById('key-orion').value = keyMap.orion;
+            document.getElementById('key-lyra').value = keyMap.lyra;
+            document.getElementById('key-silas').value = keyMap.silas;
+
+            // If keys are missing, stay on API screen, otherwise go to setup
+            if (keyMap.main) {
+                showScreen('setup-screen');
+            }
+        };
+
+        function saveAllKeys() {
+            keyMap.main = document.getElementById('key-main').value.trim();
+            keyMap.nova = document.getElementById('key-nova').value.trim();
+            keyMap.orion = document.getElementById('key-orion').value.trim();
+            keyMap.lyra = document.getElementById('key-lyra').value.trim();
+            keyMap.silas = document.getElementById('key-silas').value.trim();
+
+            if (!keyMap.main) {
+                alert("Main Game Engine Key is required!");
+                return;
+            }
+
+            localStorage.setItem('spy_mind_keys', JSON.stringify(keyMap));
+            showScreen('setup-screen');
+        }
+
+        const GROQ_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
+        let state = {
+            players: ['Earl', 'Nova', 'Orion', 'Lyra', 'Silas'],
+            spy: '',
+            isAware: true,
+            words: { civilian: '', spy: '' },
+            history: [],
+            socialHistory: [],
+            gameResults: [], 
+            phase: 'setup',
+            turnOrder: [],
+            votes: {},
+            resolveUser: null,
+            eliminated: '', 
+            settings: { finalEcho: true}
+        };
+
+        // Updated Request logic to use specific persona keys
+        async function groqRequest(systemPrompt, userPrompt, persona = 'main') {
+            const currentKey = keyMap[persona.toLowerCase()] || keyMap.main;
+            const body = {
+                model: "gemini-3.1-flash-lite-preview",
+                messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+                temperature: 0.9,
+                max_tokens: 100
+            };
+            try {
+                const response = await fetch(GROQ_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${currentKey}` },
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                return data.choices[0].message.content.trim();
+            } catch (e) { return "I'm focusing on the room."; }
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            state.phase = id.replace('-screen', '');
+        }
+
+        // --- SOCIAL LOUNGE ---
+        function openSocialLounge() {
+            showScreen('social-screen');
+            if (state.socialHistory.length === 0) {
+                addLog('Nova', "Welcome to the lounge! Want to talk strategy or just chat about the last game?", false, 'social-chat-log');
+            }
+        }
+
+        async function sendSocialMessage() {
+            const input = document.getElementById('social-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+            addLog('Earl', msg, false, 'social-chat-log');
+            state.socialHistory.push(`User: ${msg}`);
+
+            document.getElementById('social-status').classList.remove('hidden');
+            document.getElementById('social-status').innerText = "Someone is typing...";
+
+            const pastGamesSummary = state.gameResults.length > 0 ? `Past game results: ${JSON.stringify(state.gameResults)}` : "No games played yet.";
+            
+            const system = `You are a group of AI agents (Nova, Orion, Lyra, Silas) in a Social Lounge. 
+            You are friends who just played or are about to play 'Spy Mind'.
+            ${pastGamesSummary}
+            Pick ONE persona to reply with. 
+            Nova: Smart/Analytical. Orion: Blunt/Competitive. Lyra: Artistic/Friendly. Silas: Paranoiac/Intense.
+            Talk about the fun of the game, strategy, or just socialize. 
+            Format: [Name]: [Message]`;
+
+            const user = `Chat History: ${state.socialHistory.slice(-5).join(' | ')}. Respond to the user.`;
+            
+            // Randomly select one of the personas to use their key for social chat
+            const randomPersona = ['Nova', 'Orion', 'Lyra', 'Silas'][Math.floor(Math.random()*4)];
+            const response = await groqRequest(system, user, randomPersona);
+            
+            document.getElementById('social-status').classList.add('hidden');
+            const [name, ...textArr] = response.split(':');
+            const cleanName = name.replace('[', '').replace(']', '').trim();
+            const cleanText = textArr.join(':').trim();
+            
+            addLog(cleanName || 'Nova', cleanText || response, false, 'social-chat-log');
+            state.socialHistory.push(`${cleanName}: ${cleanText}`);
+        }
+
+        // --- GAME LOGIC ---
+        function startGame() {
+    state.isAware = document.getElementById('spy-aware-toggle').checked;
+    state.settings.finalEcho = document.getElementById('echo-toggle').checked;
+            const pairs = [
+{a:"Laptop", b:"Tablet"},
+{a:"Sun", b:"Star"},
+{a:"Lemon", b:"Lime"},
+{a:"Chair", b:"Stool"},
+{a:"Airplane", b:"Helicopter"},
+{a:"Ocean", b:"Lake"},
+{a:"Pencil", b:"Pen"},
+{a:"Backpack", b:"Handbag"},
+{a:"Socks", b:"Stockings"},
+{a:"Mirror", b:"Window"},
+{a:"Blanket", b:"Quilt"},
+{a:"Candle", b:"Flashlight"},
+{a:"Wallet", b:"Purse"},
+{a:"Curtain", b:"Blind"},
+{a:"Soap", b:"Shampoo"},
+{a:"Toothbrush", b:"Floss"},
+{a:"Hammer", b:"Mallet"},
+{a:"Ladder", b:"Stairs"},
+{a:"Clock", b:"Watch"},
+{a:"Bucket", b:"Basket"},
+{a:"Umbrella", b:"Raincoat"},
+{a:"Coffee", b:"Tea"},
+{a:"Butter", b:"Margarine"},
+{a:"Bread", b:"Toast"},
+{a:"Milk", b:"Cream"},
+{a:"Cookie", b:"Biscuit"},
+{a:"Honey", b:"Syrup"},
+{a:"Salt", b:"Pepper"},
+{a:"Orange", b:"Tangerine"},
+{a:"Apple", b:"Pear"},
+{a:"Pizza", b:"Flatbread"},
+{a:"Burger", b:"Sandwich"},
+{a:"Ice Cream", b:"Frozen Yogurt"},
+{a:"Coca-Cola", b:"Pepsi"},
+{a:"Wine", b:"Grape Juice"},
+{a:"Onion", b:"Garlic"},
+{a:"Steak", b:"Chop"},
+{a:"Cake", b:"Muffin"},
+{a:"Tomato", b:"Ketchup"},
+{a:"Sugar", b:"Sweetener"},
+{a:"Noodle", b:"Pasta"},
+{a:"Tiger", b:"Lion"},
+{a:"Wolf", b:"Husky"},
+{a:"Rabbit", b:"Hare"},
+{a:"Frog", b:"Toad"},
+{a:"Bee", b:"Wasp"},
+{a:"Butterfly", b:"Moth"},
+{a:"Crocodile", b:"Alligator"},
+{a:"Dolphin", b:"Whale"},
+{a:"Rat", b:"Mouse"},
+{a:"Horse", b:"Donkey"},
+{a:"Sheep", b:"Goat"},
+{a:"Mountain", b:"Hill"},
+{a:"River", b:"Stream"},
+{a:"Rain", b:"Drizzle"},
+{a:"Snow", b:"Hail"},
+{a:"Forest", b:"Jungle"},
+{a:"Island", b:"Peninsula"},
+{a:"Flower", b:"Plant"},
+{a:"Grass", b:"Moss"},
+{a:"Cave", b:"Tunnel"},
+{a:"Smartphone", b:"Telephone"},
+{a:"Television", b:"Cinema"},
+{a:"Radio", b:"Podcast"},
+{a:"Email", b:"Letter"},
+{a:"Keyboard", b:"Typewriter"},
+{a:"Mouse", b:"Trackpad"},
+{a:"Headphones", b:"Speakers"},
+{a:"Camera", b:"Camcorder"},
+{a:"Website", b:"Application"},
+{a:"Password", b:"PIN code"},
+{a:"Soccer", b:"Football"},
+{a:"Tennis", b:"Badminton"},
+{a:"Running", b:"Jogging"},
+{a:"Swimming", b:"Diving"},
+{a:"Hiking", b:"Walking"},
+{a:"Bicycle", b:"Motorcycle"},
+{a:"Guitar", b:"Ukulele"},
+{a:"Piano", b:"Keyboard"},
+{a:"Painting", b:"Drawing"},
+{a:"Dancing", b:"Ballet"},
+{a:"Doctor", b:"Nurse"},
+{a:"Teacher", b:"Professor"},
+{a:"Police", b:"Soldier"},
+{a:"Chef", b:"Cook"},
+{a:"Actor", b:"Singer"},
+{a:"Library", b:"Bookstore"},
+{a:"Hospital", b:"Clinic"},
+{a:"Hotel", b:"Motel"},
+{a:"Bank", b:"ATM"},
+{a:"Airport", b:"Train Station"},
+{a:"Dream", b:"Nightmare"},
+{a:"Circle", b:"Oval"},
+{a:"Square", b:"Rectangle"},
+{a:"Red", b:"Pink"},
+{a:"Blue", b:"Purple"},
+{a:"Warm", b:"Hot"},
+{a:"Cold", b:"Freezing"},
+{a:"Quick", b:"Fast"},
+{a:"Happy", b:"Excited"},
+{a:"Angry", b:"Annoyed"},
+{a:"Friend", b:"Partner"},
+{a:"Morning", b:"Dawn"},
+{a:"Night", b:"Midnight"},
+{a:"Holiday", b:"Weekend"},
+{a:"Movie", b:"Cartoon"}
+];
+            const p = pairs[Math.floor(Math.random()*pairs.length)];
+            state.words = Math.random() > 0.5 ? {civilian:p.a, spy:p.b} : {civilian:p.b, spy:p.a};
+            state.spy = state.players[Math.floor(Math.random()*state.players.length)];
+            
+            const isUserSpy = state.spy === 'Earl';
+            document.getElementById('your-word').innerText = isUserSpy ? state.words.spy : state.words.civilian;
+            
+            let roleMsg = isUserSpy ? (state.isAware ? "YOU ARE THE SPY." : "You are a Civilian.") : "You are a Civilian.";
+            document.getElementById('reveal-role-text').innerText = roleMsg;
+
+            state.turnOrder = [...state.players].sort(() => Math.random()-0.5);
+            state.history = [];
+            showScreen('reveal-screen');
+        }
+
+        function enterGame() {
+            showScreen('game-screen');
+            runHintPhase();
+        }
+
+        async function runHintPhase() {
+            for (const name of state.turnOrder) {
+                if (name === 'Earl') {
+                    document.getElementById('user-input-area').classList.remove('hidden');
+                    document.getElementById('phase-indicator').innerText = "Phase: Your Hint";
+                    await new Promise(res => state.resolveUser = res);
+                    document.getElementById('user-input-area').classList.add('hidden');
+                } else {
+                    document.getElementById('ai-status').innerText = `${name} is typing...`;
+                    document.getElementById('ai-status').classList.remove('hidden');
+
+                    const myWord = (name === state.spy) ? state.words.spy : state.words.civilian;
+                    const system = `You are ${name}. Secret Word: ${myWord}.
+                    Role: ${name === state.spy ? (state.isAware ? 'Spy' : 'Unknown Player') : 'Civilian'}.
+                    Instructions: Provide a ONE-WORD hint. Do not use the secret word itself. Make it vague`;
+                    const user = `Context: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}. Give your hint.`;
+                    
+                    const response = await groqRequest(system, user, name);
+                    document.getElementById('ai-status').classList.add('hidden');
+                    addLog(name, response);
+                    state.history.push({name, text: response});
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+            startDiscussion();
+        }
+
+ 
+        function startDiscussion() {
+            document.getElementById('phase-indicator').innerText = "Phase: Discussion";
+            document.getElementById('user-input-area').classList.remove('hidden');
+            document.getElementById('timer-box').classList.remove('hidden');
+            addLog("System", "Analyze hints. NO ONE SHOULD REVEAL THEIR SECRET WORD.", true);
+            
+            let timeLeft = 120;
+            const timer = setInterval(async () => {
+                timeLeft -= 12;
+                document.getElementById('timer-box').innerText = `00:${timeLeft.toString().padStart(2,'0')}`;
+                if (timeLeft <= 0) { clearInterval(timer); showVoting(); } 
+                else {
+                    const talker = state.players.filter(p=>p!=='Earl')[Math.floor(Math.random()*4)];
+                    document.getElementById('ai-status').innerText = `${talker} is typing...`;
+                    document.getElementById('ai-status').classList.remove('hidden');
+
+                    const myWord = (talker === state.spy) ? state.words.spy : state.words.civilian;
+                    const system = `You are ${talker}. 
+                    STRICT IDENTITY: You are NOT Orion, Lyra, Silas, or Nova unless that is your name. Do NOT accuse yourself.
+                    SECRET WORD: ${myWord}. NEVER SAY THIS WORD OUT LOUD. Also try to actually understand others like if both of you have the same word, its up to you to trust it or not.
+                    Role: ${talker === state.spy && state.isAware ? 'Aware Spy' : 'Player searching for the spy'}.
+                    Logic: If your word ${myWord} doesn't seem to match others' hints, you might realize you're the spy. 
+                    Be social. Accuse others based on their hints. Finish your sentence.`;
+
+                    const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}. Join the chat.`;
+                    const msg = await groqRequest(system, user, talker);
+                    document.getElementById('ai-status').classList.add('hidden');
+                    addLog(talker, msg);
+                    state.history.push({name: talker, text: msg});
+                }
+            }, 20000);
+        }
+
+        function showVoting() {
+            showScreen('voting-screen');
+            const container = document.getElementById('vote-options');
+            container.innerHTML = '';
+            state.players.filter(p => p !== 'Earl').forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = "w-full bg-slate-800 hover:bg-indigo-600 p-4 rounded-xl text-left font-bold transition-all border border-slate-700";
+                btn.innerText = p;
+                btn.onclick = () => processFinalVotes(p);
+                container.appendChild(btn);
+            });
+        }
+
+        async function processFinalVotes(userVote) {
+    state.votes['Earl'] = userVote;
+    document.getElementById('voting-screen').innerHTML = `
+        <div class="text-center">
+            <p class='animate-pulse text-indigo-400 font-bold mb-4'>The group is deciding...</p>
+            <div id="tally-preview" class="text-xs text-slate-500 space-y-1"></div>
+        </div>`;
+    
+    for (const p of state.players.filter(x=>x!=='Earl')) {
+        const myWord = (p === state.spy) ? state.words.spy : state.words.civilian;
+        const system = `You are ${p}. Secret word was ${myWord}. Vote for the spy. Return ONLY the name. Choices: ${state.players.filter(x=>x!==p).join(', ')}.`;
+        const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}.`;
+        const v = await groqRequest(system, user, p);
+        const votedName = state.players.find(x => v.includes(x)) || state.players[0];
+        state.votes[p] = votedName;
+        
+        // Update the preview live
+        const pTag = document.createElement('p');
+        pTag.innerHTML = `${p} voted for <span class="text-white">${votedName}</span>`;
+        document.getElementById('tally-preview').appendChild(pTag);
+    }
+    
+    // Calculate who is eliminated
+    const tallies = {};
+    Object.values(state.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+    state.eliminated = Object.entries(tallies).sort((a,b)=>b[1]-a[1])[0][0];
+
+            // Final Touch: Final Echo Toggle
+            if (state.eliminated === state.spy) {
+                addLog("System", "THE SPY HAS BEEN EXPOSED!", true);
+                if (state.settings.finalEcho) {
+                    addLog("System", "Returning for Final Echo in 15 seconds...", true);
+                    setTimeout(() => { startFinalEcho(); }, 15000);
+                } else {
+                    finishGame(false); 
+                }
+            } else {
+                finishGame(false); 
+            }
+        }
+
+async function startFinalEcho() {
+    showScreen('game-screen');
+    state.phase = 'final-echo';
+    document.getElementById('phase-indicator').innerText = "PHASE: FINAL ECHO";
+    document.getElementById('user-input-area').classList.remove('hidden');
+    
+    addLog("System", `${state.eliminated.toUpperCase()}, YOU HAVE BEEN CAUGHT.`, true);
+    addLog("System", "Guess the Civilian word now to steal the victory!", true);
+
+    if (state.eliminated !== 'Earl') {
+        // AI Guess Logic
+        document.getElementById('ai-status').innerText = `${state.eliminated} is thinking...`;
+        document.getElementById('ai-status').classList.remove('hidden');
+
+        const system = `You are ${state.eliminated}. You are the SPY and you were caught. 
+        Based on the discussion history, guess the CIVILIAN secret word. 
+        Reply with ONLY the word. No sentences.`;
+        const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}`;
+        
+        const guess = await groqRequest(system, user, state.eliminated);
+        document.getElementById('ai-status').classList.add('hidden');
+        addLog(state.eliminated, `I think the word is... ${guess.toUpperCase()}!`);
+        
+        setTimeout(() => evaluateGuess(guess), 2000);
+    }
+}
+
+function handleUserInput() {
+    const val = document.getElementById('user-msg').value.trim();
+    if (!val) return;
+    document.getElementById('user-msg').value = '';
+    
+    if (state.phase === 'final-echo' && state.eliminated === 'Earl') {
+        addLog('Earl', `My final guess is: ${val}`);
+        evaluateGuess(val);
+    } else {
+        addLog('Earl', val);
+        state.history.push({name: 'Earl', text: val});
+        if (state.resolveUser) { state.resolveUser(); state.resolveUser = null; }
+    }
+}
+
+function evaluateGuess(guess) {
+    const cleanGuess = guess.toLowerCase().trim();
+    const cleanTarget = state.words.civilian.toLowerCase().trim();
+    const isCorrect = cleanGuess === cleanTarget || cleanGuess.includes(cleanTarget);
+    finishGame(isCorrect);
+}
+
+function finishGame(spyGuessedCorrectly) {
+    showScreen('result-screen');
+    document.getElementById('res-civ').innerText = state.words.civilian;
+    document.getElementById('res-spy').innerText = state.words.spy;
+    const title = document.getElementById('res-title');
+    
+    if (state.eliminated === state.spy) {
+        if (spyGuessedCorrectly) {
+            title.innerText = `Spy Stole the Win! ${state.spy} wins`;
+            title.className = "text-4xl font-bold mb-4 text-orange-500";
+            addLog("System", "The Spy was caught but guessed the word correctly!", true, 'vote-summary');
+        } else {
+            title.innerText = `Civilians Win! ${state.spy} loses`;
+            title.className = "text-4xl font-bold mb-4 text-green-400";
+        }
+    } else {
+        title.innerText = `The Spy Won! ${state.spy} wins`;
+        title.className = "text-4xl font-bold mb-4 text-red-500";
+    }
+
+    state.gameResults.push({ 
+        winner: title.innerText, 
+        spy: state.spy, 
+        eliminated: state.eliminated 
+    });
+    
+    const summary = document.getElementById('vote-summary');
+    summary.innerHTML += Object.entries(state.votes).map(([voter, target]) => 
+        `<p><span class="text-slate-500">${voter}</span> voted for <span class="text-white font-bold">${target}</span></p>`
+    ).join('');
+}
+
+        function addLog(name, text, system = false, containerId = 'chat-log') {
+            const log = document.getElementById(containerId);
+            const d = document.createElement('div');
+            if (system) {
+                d.className = "text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold py-2";
+                d.innerText = `— ${text} —`;
+            } else {
+                const isUser = name === 'Earl';
+                d.className = `flex ${isUser ? 'justify-end' : 'justify-start'} fade-in mb-2`;
+                d.innerHTML = `
+                    <div class="chat-bubble max-w-[85%] ${isUser ? 'bg-indigo-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-slate-800 text-slate-200 rounded-r-xl rounded-tl-xl'} px-4 py-3 shadow-lg border border-white/5">
+                        <div class="text-[10px] font-bold opacity-50 mb-1 uppercase tracking-tight">${name}</div>
+                        <div class="text-sm">${text}</div>
+                    </div>
+                `;
+            }
+            log.appendChild(d);
+            log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
+
