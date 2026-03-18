@@ -26,6 +26,9 @@
         input:checked + .slider { background-color: #6366f1; }
         input:checked + .slider:before { transform: translateX(22px); }
         .chat-bubble { word-wrap: break-word; overflow-wrap: break-word; height: auto; min-height: fit-content; line-height: 1.5; }
+        
+        /* New Modal Styling */
+        .modal-bg { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
@@ -72,23 +75,27 @@
             <p class="text-center text-slate-500 text-xs mb-8 uppercase tracking-widest font-bold">Llama 70B Social Deduction</p>
             
             <div class="space-y-4 mb-6">
-             <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-3 mb-4">
-    <div class="flex items-center justify-between">
-        <div><p class="font-bold text-[10px] uppercase text-indigo-300">Inform Spy</p></div>
-        <label class="switch"><input type="checkbox" id="spy-aware-toggle" checked><span class="slider"></span></label>
-    </div>
-    <div class="flex items-center justify-between border-t border-slate-700 pt-3">
-        <div><p class="font-bold text-[10px] uppercase text-indigo-300">Final Echo</p></div>
-        <label class="switch"><input type="checkbox" id="echo-toggle" checked><span class="slider"></span></label>
-    </div>
-</div>
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-3 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div><p class="font-bold text-[10px] uppercase text-indigo-300">Inform Spy</p></div>
+                        <label class="switch"><input type="checkbox" id="spy-aware-toggle" checked><span class="slider"></span></label>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+                        <div><p class="font-bold text-[10px] uppercase text-indigo-300">Final Echo</p></div>
+                        <label class="switch"><input type="checkbox" id="echo-toggle" checked><span class="slider"></span></label>
+                    </div>
+                </div>
 
-<div class="text-center mt-4">
-    <button onclick="showScreen('api-screen')" class="text-[10px] text-slate-500 hover:text-indigo-400 uppercase tracking-widest font-bold transition-colors">
-        Edit API Keys
-    </button>
-</div>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="exportGameData()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-300 transition-all">Export JSON</button>
+                    <button onclick="openImportModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-300 transition-all">Import JSON</button>
+                </div>
 
+                <div class="text-center mt-2 mb-4">
+                    <button onclick="showScreen('api-screen')" class="text-[10px] text-slate-500 hover:text-indigo-400 uppercase tracking-widest font-bold transition-colors">
+                        Edit Match API Keys
+                    </button>
+                </div>
 
                 <button onclick="openSocialLounge()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
                     <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
@@ -104,7 +111,10 @@
         <div id="social-screen" class="screen hidden flex flex-col h-full">
             <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex justify-between items-center">
                 <h2 class="text-xs font-bold text-indigo-400 uppercase">Social Lounge</h2>
-                <button onclick="showScreen('setup-screen')" class="text-xs text-slate-400 hover:text-white">Back to Menu</button>
+                <div class="flex gap-3">
+                    <button onclick="openSocialApiModal()" class="text-[10px] font-bold text-indigo-300 hover:text-white uppercase transition-colors">Edit API</button>
+                    <button onclick="showScreen('setup-screen')" class="text-xs text-slate-400 hover:text-white">Back</button>
+                </div>
             </div>
             <div id="social-chat-log" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
                 <div class="text-center text-[10px] text-slate-500 uppercase py-4">Nova, Orion, Lyra, and Silas are here.</div>
@@ -114,6 +124,40 @@
                 <div class="flex gap-2">
                     <input type="text" id="social-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm" placeholder="Talk to the bots...">
                     <button onclick="sendSocialMessage()" class="bg-indigo-600 p-3 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="social-api-modal" class="hidden fixed inset-0 modal-bg z-[100] flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-indigo-500/30 w-full max-w-md rounded-2xl p-6 shadow-2xl">
+                <h2 class="text-xl font-bold text-white mb-1">Lounge API Keys</h2>
+                <p class="text-slate-400 text-xs mb-4">Set unique keys for the Social Lounge.</p>
+                <div class="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                    <div><label class="text-[10px] text-indigo-400 font-bold uppercase">Nova Lounge Key</label><input type="password" id="lounge-key-nova" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-indigo-500 outline-none"></div>
+                    <div><label class="text-[10px] text-indigo-400 font-bold uppercase">Lyra Lounge Key</label><input type="password" id="lounge-key-lyra" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-indigo-500 outline-none"></div>
+                    <div><label class="text-[10px] text-indigo-400 font-bold uppercase">Orion Lounge Key</label><input type="password" id="lounge-key-orion" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-indigo-500 outline-none"></div>
+                    <div><label class="text-[10px] text-indigo-400 font-bold uppercase">Silas Lounge Key</label><input type="password" id="lounge-key-silas" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-indigo-500 outline-none"></div>
+                    <div class="pt-2 border-t border-slate-800"><label class="text-[10px] text-emerald-400 font-bold uppercase underline">Backup API Key</label><input type="password" id="lounge-key-backup" placeholder="Used if others fail" class="w-full bg-slate-800 border border-emerald-900/30 rounded-lg p-2 text-sm text-white outline-none"></div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="saveLoungeKeys()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl">SAVE KEYS</button>
+                    <button onclick="document.getElementById('social-api-modal').classList.add('hidden')" class="px-6 py-3 bg-slate-800 text-slate-400 font-bold rounded-xl">CLOSE</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="import-modal" class="hidden fixed inset-0 modal-bg z-[110] flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-amber-500/30 w-full max-w-md rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-white mb-4">Import Game Data</h2>
+                <div class="space-y-4">
+                    <button onclick="document.getElementById('file-input').click()" class="w-full py-4 bg-slate-800 border border-slate-700 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-700 transition-all">📁 PICK A JSON FILE</button>
+                    <input type="file" id="file-input" class="hidden" accept=".json" onchange="handleFileImport(event)">
+                    <div class="text-center text-slate-500 text-[10px] font-bold">OR PASTE JSON CODE BELOW</div>
+                    <textarea id="import-text" placeholder='Paste code here...' class="w-full h-32 bg-black border border-slate-800 rounded-xl p-3 text-xs text-emerald-500 font-mono outline-none"></textarea>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="processImport()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl">OK / IMPORT</button>
+                    <button onclick="document.getElementById('import-modal').classList.add('hidden')" class="px-6 py-3 bg-slate-800 text-slate-400 font-bold rounded-xl">CANCEL</button>
                 </div>
             </div>
         </div>
@@ -152,7 +196,10 @@
                 <p>Spy's Word: <span id="res-spy" class="text-red-400 font-bold"></span></p>
                 <div class="border-t border-slate-700 mt-4 pt-4 text-xs space-y-1" id="vote-summary"></div>
             </div>
-            <button onclick="location.reload()" class="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-bold">Back to Menu</button>
+            <div class="flex flex-col gap-2">
+                <button id="post-game-btn" onclick="startPostGameDiscussion()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-500 transition-all">POST GAME DISCUSSION</button>
+                <button onclick="location.reload()" class="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-bold">Back to Menu</button>
+            </div>
         </div>
     </div>
 
@@ -160,6 +207,10 @@
         // API KEY STORAGE LOGIC
         const keyMap = JSON.parse(localStorage.getItem('spy_mind_keys')) || {
             main: '', nova: '', orion: '', lyra: '', silas: ''
+        };
+        
+        const loungeKeyMap = JSON.parse(localStorage.getItem('spy_mind_lounge_keys')) || {
+            nova: '', lyra: '', orion: '', silas: '', backup: ''
         };
 
         // Initialize UI with saved keys
@@ -170,7 +221,6 @@
             document.getElementById('key-lyra').value = keyMap.lyra;
             document.getElementById('key-silas').value = keyMap.silas;
 
-            // If keys are missing, stay on API screen, otherwise go to setup
             if (keyMap.main) {
                 showScreen('setup-screen');
             }
@@ -192,6 +242,27 @@
             showScreen('setup-screen');
         }
 
+        // LOUNGE KEY LOGIC
+        function openSocialApiModal() {
+            document.getElementById('lounge-key-nova').value = loungeKeyMap.nova;
+            document.getElementById('lounge-key-lyra').value = loungeKeyMap.lyra;
+            document.getElementById('lounge-key-orion').value = loungeKeyMap.orion;
+            document.getElementById('lounge-key-silas').value = loungeKeyMap.silas;
+            document.getElementById('lounge-key-backup').value = loungeKeyMap.backup;
+            document.getElementById('social-api-modal').classList.remove('hidden');
+        }
+
+        function saveLoungeKeys() {
+            loungeKeyMap.nova = document.getElementById('lounge-key-nova').value.trim();
+            loungeKeyMap.lyra = document.getElementById('lounge-key-lyra').value.trim();
+            loungeKeyMap.orion = document.getElementById('lounge-key-orion').value.trim();
+            loungeKeyMap.silas = document.getElementById('lounge-key-silas').value.trim();
+            loungeKeyMap.backup = document.getElementById('lounge-key-backup').value.trim();
+            localStorage.setItem('spy_mind_lounge_keys', JSON.stringify(loungeKeyMap));
+            document.getElementById('social-api-modal').classList.add('hidden');
+            alert("Lounge Keys Saved!");
+        }
+
         const GROQ_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
         let state = {
@@ -207,17 +278,27 @@
             votes: {},
             resolveUser: null,
             eliminated: '', 
+            winner: '',
+            discussionTimer: null,
             settings: { finalEcho: true}
         };
 
-        // Updated Request logic to use specific persona keys
-        async function groqRequest(systemPrompt, userPrompt, persona = 'main') {
-            const currentKey = keyMap[persona.toLowerCase()] || keyMap.main;
+        // Updated Request logic to use specific persona keys and handle Lounge/Backup logic
+        async function groqRequest(systemPrompt, userPrompt, persona = 'main', mode = 'match') {
+            let currentKey = keyMap.main;
+            
+            if (mode === 'lounge') {
+                const nameKey = persona.toLowerCase();
+                currentKey = loungeKeyMap[nameKey] || loungeKeyMap.backup || keyMap[nameKey] || keyMap.main;
+            } else {
+                currentKey = keyMap[persona.toLowerCase()] || keyMap.main;
+            }
+
             const body = {
                 model: "gemini-3.1-flash-lite-preview",
                 messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
                 temperature: 0.9,
-                max_tokens: 100
+                max_tokens: 300
             };
             try {
                 const response = await fetch(GROQ_URL, {
@@ -234,14 +315,111 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
             state.phase = id.replace('-screen', '');
+            
+            // Auto-stop lounge timer if we leave the social screen
+            if (id !== 'social-screen' && loungeInterval) {
+                clearInterval(loungeInterval);
+                loungeInterval = null;
+            }
+        }
+
+        // --- IMPORT/EXPORT LOGIC ---
+        function exportGameData() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++){
+                let k = localStorage.key(i);
+                data[k] = localStorage.getItem(k);
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `spy_mind_backup_${new Date().getTime()}.json`;
+            a.click();
+        }
+
+        function openImportModal() {
+            document.getElementById('import-modal').classList.remove('hidden');
+            document.getElementById('import-text').value = '';
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('import-text').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        function processImport() {
+            const raw = document.getElementById('import-text').value.trim();
+            if(!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if(confirm("This will replace all your current data and keys. Continue?")) {
+                    localStorage.clear();
+                    Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+                    alert("Import successful! Reloading...");
+                    location.reload();
+                }
+            } catch(e) { alert("Invalid JSON format!"); }
         }
 
         // --- SOCIAL LOUNGE ---
+        let loungeInterval = null;
+
         function openSocialLounge() {
+            // Check if lounge keys are set - if not, prompt first time
+            if (!loungeKeyMap.nova && !loungeKeyMap.backup) {
+                openSocialApiModal();
+                return;
+            }
+            
             showScreen('social-screen');
+            state.phase = 'social';
+            
             if (state.socialHistory.length === 0) {
                 addLog('Nova', "Welcome to the lounge! Want to talk strategy or just chat about the last game?", false, 'social-chat-log');
             }
+
+            if (!loungeInterval) {
+                loungeInterval = setInterval(() => {
+                    if (state.phase === 'social') {
+                        triggerAutonomousSocial();
+                    }
+                }, 45000);
+            }
+        }
+
+        async function triggerAutonomousSocial() {
+            const agents = ['Nova', 'Orion', 'Lyra', 'Silas'];
+            const talker = agents[Math.floor(Math.random() * agents.length)];
+            
+            document.getElementById('social-status').classList.remove('hidden');
+            document.getElementById('social-status').innerText = `${talker} is thinking...`;
+
+            const memories = localStorage.getItem('spy_mind_memories') || "No past games recorded yet.";
+
+            const system = `You are ${talker}. You are hanging out in the Social Lounge with Nova, Orion, Lyra, and Silas.
+            
+            YOUR MEMORY BANK (Past Games):
+            ${memories}
+
+            Instructions:
+            - Reference the Technical Details (who won/lost) or the Narrative Summary (drama/accuses) from past games.
+            - Be autonomous. You aren't replying to a user; you are starting a conversation or commenting on the "vibe".
+            - Persona Guide: Nova(Analytical), Orion(Blunt/Aggressive), Lyra(Friendly), Silas(Suspicious).
+            - Format: [Name]: [Message]`;
+
+            const response = await groqRequest(system, "Keep the conversation going based on our history.", talker, 'lounge');
+            
+            document.getElementById('social-status').classList.add('hidden');
+            
+            const [name, ...textArr] = response.split(':');
+            const cleanText = textArr.join(':').trim() || response;
+            addLog(talker, cleanText, false, 'social-chat-log');
+            state.socialHistory.push(`${talker}: ${cleanText}`);
         }
 
         async function sendSocialMessage() {
@@ -255,21 +433,23 @@
             document.getElementById('social-status').classList.remove('hidden');
             document.getElementById('social-status').innerText = "Someone is typing...";
 
-            const pastGamesSummary = state.gameResults.length > 0 ? `Past game results: ${JSON.stringify(state.gameResults)}` : "No games played yet.";
+            const persistentMemories = localStorage.getItem('spy_mind_memories') || "No past games recorded in memory bank.";
             
             const system = `You are a group of AI agents (Nova, Orion, Lyra, Silas) in a Social Lounge. 
             You are friends who just played or are about to play 'Spy Mind'.
-            ${pastGamesSummary}
+            
+            GAME MEMORY BANK:
+            ${persistentMemories}
+
             Pick ONE persona to reply with. 
             Nova: Smart/Analytical. Orion: Blunt/Competitive. Lyra: Artistic/Friendly. Silas: Paranoiac/Intense.
-            Talk about the fun of the game, strategy, or just socialize. 
+            Talk about the fun of the game, strategy, or just socialize. Reference the memory of past games if the user mentions them or to bring up past drama.
             Format: [Name]: [Message]`;
 
             const user = `Chat History: ${state.socialHistory.slice(-5).join(' | ')}. Respond to the user.`;
             
-            // Randomly select one of the personas to use their key for social chat
             const randomPersona = ['Nova', 'Orion', 'Lyra', 'Silas'][Math.floor(Math.random()*4)];
-            const response = await groqRequest(system, user, randomPersona);
+            const response = await groqRequest(system, user, randomPersona, 'lounge');
             
             document.getElementById('social-status').classList.add('hidden');
             const [name, ...textArr] = response.split(':');
@@ -282,116 +462,33 @@
 
         // --- GAME LOGIC ---
         function startGame() {
-    state.isAware = document.getElementById('spy-aware-toggle').checked;
-    state.settings.finalEcho = document.getElementById('echo-toggle').checked;
+            state.isAware = document.getElementById('spy-aware-toggle').checked;
+            state.settings.finalEcho = document.getElementById('echo-toggle').checked;
             const pairs = [
-{a:"Laptop", b:"Tablet"},
-{a:"Sun", b:"Star"},
-{a:"Lemon", b:"Lime"},
-{a:"Chair", b:"Stool"},
-{a:"Airplane", b:"Helicopter"},
-{a:"Ocean", b:"Lake"},
-{a:"Pencil", b:"Pen"},
-{a:"Backpack", b:"Handbag"},
-{a:"Socks", b:"Stockings"},
-{a:"Mirror", b:"Window"},
-{a:"Blanket", b:"Quilt"},
-{a:"Candle", b:"Flashlight"},
-{a:"Wallet", b:"Purse"},
-{a:"Curtain", b:"Blind"},
-{a:"Soap", b:"Shampoo"},
-{a:"Toothbrush", b:"Floss"},
-{a:"Hammer", b:"Mallet"},
-{a:"Ladder", b:"Stairs"},
-{a:"Clock", b:"Watch"},
-{a:"Bucket", b:"Basket"},
-{a:"Umbrella", b:"Raincoat"},
-{a:"Coffee", b:"Tea"},
-{a:"Butter", b:"Margarine"},
-{a:"Bread", b:"Toast"},
-{a:"Milk", b:"Cream"},
-{a:"Cookie", b:"Biscuit"},
-{a:"Honey", b:"Syrup"},
-{a:"Salt", b:"Pepper"},
-{a:"Orange", b:"Tangerine"},
-{a:"Apple", b:"Pear"},
-{a:"Pizza", b:"Flatbread"},
-{a:"Burger", b:"Sandwich"},
-{a:"Ice Cream", b:"Frozen Yogurt"},
-{a:"Coca-Cola", b:"Pepsi"},
-{a:"Wine", b:"Grape Juice"},
-{a:"Onion", b:"Garlic"},
-{a:"Steak", b:"Chop"},
-{a:"Cake", b:"Muffin"},
-{a:"Tomato", b:"Ketchup"},
-{a:"Sugar", b:"Sweetener"},
-{a:"Noodle", b:"Pasta"},
-{a:"Tiger", b:"Lion"},
-{a:"Wolf", b:"Husky"},
-{a:"Rabbit", b:"Hare"},
-{a:"Frog", b:"Toad"},
-{a:"Bee", b:"Wasp"},
-{a:"Butterfly", b:"Moth"},
-{a:"Crocodile", b:"Alligator"},
-{a:"Dolphin", b:"Whale"},
-{a:"Rat", b:"Mouse"},
-{a:"Horse", b:"Donkey"},
-{a:"Sheep", b:"Goat"},
-{a:"Mountain", b:"Hill"},
-{a:"River", b:"Stream"},
-{a:"Rain", b:"Drizzle"},
-{a:"Snow", b:"Hail"},
-{a:"Forest", b:"Jungle"},
-{a:"Island", b:"Peninsula"},
-{a:"Flower", b:"Plant"},
-{a:"Grass", b:"Moss"},
-{a:"Cave", b:"Tunnel"},
-{a:"Smartphone", b:"Telephone"},
-{a:"Television", b:"Cinema"},
-{a:"Radio", b:"Podcast"},
-{a:"Email", b:"Letter"},
-{a:"Keyboard", b:"Typewriter"},
-{a:"Mouse", b:"Trackpad"},
-{a:"Headphones", b:"Speakers"},
-{a:"Camera", b:"Camcorder"},
-{a:"Website", b:"Application"},
-{a:"Password", b:"PIN code"},
-{a:"Soccer", b:"Football"},
-{a:"Tennis", b:"Badminton"},
-{a:"Running", b:"Jogging"},
-{a:"Swimming", b:"Diving"},
-{a:"Hiking", b:"Walking"},
-{a:"Bicycle", b:"Motorcycle"},
-{a:"Guitar", b:"Ukulele"},
-{a:"Piano", b:"Keyboard"},
-{a:"Painting", b:"Drawing"},
-{a:"Dancing", b:"Ballet"},
-{a:"Doctor", b:"Nurse"},
-{a:"Teacher", b:"Professor"},
-{a:"Police", b:"Soldier"},
-{a:"Chef", b:"Cook"},
-{a:"Actor", b:"Singer"},
-{a:"Library", b:"Bookstore"},
-{a:"Hospital", b:"Clinic"},
-{a:"Hotel", b:"Motel"},
-{a:"Bank", b:"ATM"},
-{a:"Airport", b:"Train Station"},
-{a:"Dream", b:"Nightmare"},
-{a:"Circle", b:"Oval"},
-{a:"Square", b:"Rectangle"},
-{a:"Red", b:"Pink"},
-{a:"Blue", b:"Purple"},
-{a:"Warm", b:"Hot"},
-{a:"Cold", b:"Freezing"},
-{a:"Quick", b:"Fast"},
-{a:"Happy", b:"Excited"},
-{a:"Angry", b:"Annoyed"},
-{a:"Friend", b:"Partner"},
-{a:"Morning", b:"Dawn"},
-{a:"Night", b:"Midnight"},
-{a:"Holiday", b:"Weekend"},
-{a:"Movie", b:"Cartoon"}
-];
+                {a:"Laptop", b:"Tablet"}, {a:"Sun", b:"Star"}, {a:"Lemon", b:"Lime"}, {a:"Chair", b:"Stool"}, {a:"Airplane", b:"Helicopter"},
+                {a:"Ocean", b:"Lake"}, {a:"Pencil", b:"Pen"}, {a:"Backpack", b:"Handbag"}, {a:"Socks", b:"Stockings"}, {a:"Mirror", b:"Window"},
+                {a:"Blanket", b:"Quilt"}, {a:"Candle", b:"Flashlight"}, {a:"Wallet", b:"Purse"}, {a:"Curtain", b:"Blind"}, {a:"Soap", b:"Shampoo"},
+                {a:"Toothbrush", b:"Floss"}, {a:"Hammer", b:"Mallet"}, {a:"Ladder", b:"Stairs"}, {a:"Clock", b:"Watch"}, {a:"Bucket", b:"Basket"},
+                {a:"Umbrella", b:"Raincoat"}, {a:"Coffee", b:"Tea"}, {a:"Butter", b:"Margarine"}, {a:"Bread", b:"Toast"}, {a:"Milk", b:"Cream"},
+                {a:"Cookie", b:"Biscuit"}, {a:"Honey", b:"Syrup"}, {a:"Salt", b:"Pepper"}, {a:"Orange", b:"Tangerine"}, {a:"Apple", b:"Pear"},
+                {a:"Pizza", b:"Flatbread"}, {a:"Burger", b:"Sandwich"}, {a:"Ice Cream", b:"Frozen Yogurt"}, {a:"Coca-Cola", b:"Pepsi"},
+                {a:"Wine", b:"Grape Juice"}, {a:"Onion", b:"Garlic"}, {a:"Steak", b:"Chop"}, {a:"Cake", b:"Muffin"}, {a:"Tomato", b:"Ketchup"},
+                {a:"Sugar", b:"Sweetener"}, {a:"Noodle", b:"Pasta"}, {a:"Tiger", b:"Lion"}, {a:"Wolf", b:"Husky"}, {a:"Rabbit", b:"Hare"},
+                {a:"Frog", b:"Toad"}, {a:"Bee", b:"Wasp"}, {a:"Butterfly", b:"Moth"}, {a:"Crocodile", b:"Alligator"}, {a:"Dolphin", b:"Whale"},
+                {a:"Rat", b:"Mouse"}, {a:"Horse", b:"Donkey"}, {a:"Sheep", b:"Goat"}, {a:"Mountain", b:"Hill"}, {a:"River", b:"Stream"},
+                {a:"Rain", b:"Drizzle"}, {a:"Snow", b:"Hail"}, {a:"Forest", b:"Jungle"}, {a:"Island", b:"Peninsula"}, {a:"Flower", b:"Plant"},
+                {a:"Grass", b:"Moss"}, {a:"Cave", b:"Tunnel"}, {a:"Smartphone", b:"Telephone"}, {a:"Television", b:"Cinema"}, {a:"Radio", b:"Podcast"},
+                {a:"Email", b:"Letter"}, {a:"Keyboard", b:"Typewriter"}, {a:"Mouse", b:"Trackpad"}, {a:"Headphones", b:"Speakers"},
+                {a:"Camera", b:"Camcorder"}, {a:"Website", b:"Application"}, {a:"Password", b:"PIN code"}, {a:"Soccer", b:"Football"},
+                {a:"Tennis", b:"Badminton"}, {a:"Running", b:"Jogging"}, {a:"Swimming", b:"Diving"}, {a:"Hiking", b:"Walking"},
+                {a:"Bicycle", b:"Motorcycle"}, {a:"Guitar", b:"Ukulele"}, {a:"Piano", b:"Keyboard"}, {a:"Painting", b:"Drawing"},
+                {a:"Dancing", b:"Ballet"}, {a:"Doctor", b:"Nurse"}, {a:"Teacher", b:"Professor"}, {a:"Police", b:"Soldier"},
+                {a:"Chef", b:"Cook"}, {a:"Actor", b:"Singer"}, {a:"Library", b:"Bookstore"}, {a:"Hospital", b:"Clinic"},
+                {a:"Hotel", b:"Motel"}, {a:"Bank", b:"ATM"}, {a:"Airport", b:"Train Station"}, {a:"Dream", b:"Nightmare"},
+                {a:"Circle", b:"Oval"}, {a:"Square", b:"Rectangle"}, {a:"Red", b:"Pink"}, {a:"Blue", b:"Purple"}, {a:"Warm", b:"Hot"},
+                {a:"Cold", b:"Freezing"}, {a:"Quick", b:"Fast"}, {a:"Happy", b:"Excited"}, {a:"Angry", b:"Annoyed"}, {a:"Friend", b:"Partner"},
+                {a:"Morning", b:"Dawn"}, {a:"Night", b:"Midnight"}, {a:"Holiday", b:"Weekend"}, {a:"Movie", b:"Cartoon"}
+            ];
             const p = pairs[Math.floor(Math.random()*pairs.length)];
             state.words = Math.random() > 0.5 ? {civilian:p.a, spy:p.b} : {civilian:p.b, spy:p.a};
             state.spy = state.players[Math.floor(Math.random()*state.players.length)];
@@ -404,6 +501,7 @@
 
             state.turnOrder = [...state.players].sort(() => Math.random()-0.5);
             state.history = [];
+            state.votes = {};
             showScreen('reveal-screen');
         }
 
@@ -439,7 +537,6 @@
             startDiscussion();
         }
 
- 
         function startDiscussion() {
             document.getElementById('phase-indicator').innerText = "Phase: Discussion";
             document.getElementById('user-input-area').classList.remove('hidden');
@@ -447,10 +544,10 @@
             addLog("System", "Analyze hints. NO ONE SHOULD REVEAL THEIR SECRET WORD.", true);
             
             let timeLeft = 120;
-            const timer = setInterval(async () => {
+            state.discussionTimer = setInterval(async () => {
                 timeLeft -= 12;
                 document.getElementById('timer-box').innerText = `00:${timeLeft.toString().padStart(2,'0')}`;
-                if (timeLeft <= 0) { clearInterval(timer); showVoting(); } 
+                if (timeLeft <= 0) { clearInterval(state.discussionTimer); showVoting(); } 
                 else {
                     const talker = state.players.filter(p=>p!=='Earl')[Math.floor(Math.random()*4)];
                     document.getElementById('ai-status').innerText = `${talker} is typing...`;
@@ -487,126 +584,195 @@
         }
 
         async function processFinalVotes(userVote) {
-    state.votes['Earl'] = userVote;
-    document.getElementById('voting-screen').innerHTML = `
-        <div class="text-center">
-            <p class='animate-pulse text-indigo-400 font-bold mb-4'>The group is deciding...</p>
-            <div id="tally-preview" class="text-xs text-slate-500 space-y-1"></div>
-        </div>`;
-    
-    for (const p of state.players.filter(x=>x!=='Earl')) {
-        const myWord = (p === state.spy) ? state.words.spy : state.words.civilian;
-        const system = `You are ${p}. Secret word was ${myWord}. Vote for the spy. Return ONLY the name. Choices: ${state.players.filter(x=>x!==p).join(', ')}.`;
-        const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}.`;
-        const v = await groqRequest(system, user, p);
-        const votedName = state.players.find(x => v.includes(x)) || state.players[0];
-        state.votes[p] = votedName;
-        
-        // Update the preview live
-        const pTag = document.createElement('p');
-        pTag.innerHTML = `${p} voted for <span class="text-white">${votedName}</span>`;
-        document.getElementById('tally-preview').appendChild(pTag);
-    }
-    
-    // Calculate who is eliminated
-    const tallies = {};
-    Object.values(state.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
-    state.eliminated = Object.entries(tallies).sort((a,b)=>b[1]-a[1])[0][0];
+            state.votes['Earl'] = userVote;
+            document.getElementById('voting-screen').innerHTML = `
+                <div class="text-center">
+                    <p class='animate-pulse text-indigo-400 font-bold mb-4'>The group is deciding...</p>
+                    <div id="tally-preview" class="text-xs text-slate-500 space-y-1"></div>
+                </div>`;
+            
+            for (const p of state.players.filter(x=>x!=='Earl')) {
+                const myWord = (p === state.spy) ? state.words.spy : state.words.civilian;
+                const system = `You are ${p}. Secret word was ${myWord}. Vote for the spy. Return ONLY the name. Choices: ${state.players.filter(x=>x!==p).join(', ')}.`;
+                const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}.`;
+                const v = await groqRequest(system, user, p);
+                const votedName = state.players.find(x => v.includes(x)) || state.players[0];
+                state.votes[p] = votedName;
+                
+                const pTag = document.createElement('p');
+                pTag.innerHTML = `${p} voted for <span class="text-white">${votedName}</span>`;
+                document.getElementById('tally-preview').appendChild(pTag);
+            }
+            
+            const tallies = {};
+            Object.values(state.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+            state.eliminated = Object.entries(tallies).sort((a,b)=>b[1]-a[1])[0][0];
 
-            // Final Touch: Final Echo Toggle
             if (state.eliminated === state.spy) {
                 addLog("System", "THE SPY HAS BEEN EXPOSED!", true);
                 if (state.settings.finalEcho) {
                     addLog("System", "Returning for Final Echo in 15 seconds...", true);
                     setTimeout(() => { startFinalEcho(); }, 15000);
                 } else {
-                    finishGame(false); 
+                    await finishGame(false); 
                 }
             } else {
-                finishGame(false); 
+                await finishGame(false); 
             }
         }
 
-async function startFinalEcho() {
-    showScreen('game-screen');
-    state.phase = 'final-echo';
-    document.getElementById('phase-indicator').innerText = "PHASE: FINAL ECHO";
-    document.getElementById('user-input-area').classList.remove('hidden');
-    
-    addLog("System", `${state.eliminated.toUpperCase()}, YOU HAVE BEEN CAUGHT.`, true);
-    addLog("System", "Guess the Civilian word now to steal the victory!", true);
+        async function startFinalEcho() {
+            showScreen('game-screen');
+            state.phase = 'final-echo';
+            document.getElementById('phase-indicator').innerText = "PHASE: FINAL ECHO";
+            document.getElementById('user-input-area').classList.remove('hidden');
+            
+            addLog("System", `${state.eliminated.toUpperCase()}, YOU HAVE BEEN CAUGHT.`, true);
+            addLog("System", "Guess the Civilian word now to steal the victory!", true);
 
-    if (state.eliminated !== 'Earl') {
-        // AI Guess Logic
-        document.getElementById('ai-status').innerText = `${state.eliminated} is thinking...`;
-        document.getElementById('ai-status').classList.remove('hidden');
+            if (state.eliminated !== 'Earl') {
+                document.getElementById('ai-status').innerText = `${state.eliminated} is thinking...`;
+                document.getElementById('ai-status').classList.remove('hidden');
 
-        const system = `You are ${state.eliminated}. You are the SPY and you were caught. 
-        Based on the discussion history, guess the CIVILIAN secret word. 
-        Reply with ONLY the word. No sentences.`;
-        const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}`;
-        
-        const guess = await groqRequest(system, user, state.eliminated);
-        document.getElementById('ai-status').classList.add('hidden');
-        addLog(state.eliminated, `I think the word is... ${guess.toUpperCase()}!`);
-        
-        setTimeout(() => evaluateGuess(guess), 2000);
-    }
-}
-
-function handleUserInput() {
-    const val = document.getElementById('user-msg').value.trim();
-    if (!val) return;
-    document.getElementById('user-msg').value = '';
-    
-    if (state.phase === 'final-echo' && state.eliminated === 'Earl') {
-        addLog('Earl', `My final guess is: ${val}`);
-        evaluateGuess(val);
-    } else {
-        addLog('Earl', val);
-        state.history.push({name: 'Earl', text: val});
-        if (state.resolveUser) { state.resolveUser(); state.resolveUser = null; }
-    }
-}
-
-function evaluateGuess(guess) {
-    const cleanGuess = guess.toLowerCase().trim();
-    const cleanTarget = state.words.civilian.toLowerCase().trim();
-    const isCorrect = cleanGuess === cleanTarget || cleanGuess.includes(cleanTarget);
-    finishGame(isCorrect);
-}
-
-function finishGame(spyGuessedCorrectly) {
-    showScreen('result-screen');
-    document.getElementById('res-civ').innerText = state.words.civilian;
-    document.getElementById('res-spy').innerText = state.words.spy;
-    const title = document.getElementById('res-title');
-    
-    if (state.eliminated === state.spy) {
-        if (spyGuessedCorrectly) {
-            title.innerText = `Spy Stole the Win! ${state.spy} wins`;
-            title.className = "text-4xl font-bold mb-4 text-orange-500";
-            addLog("System", "The Spy was caught but guessed the word correctly!", true, 'vote-summary');
-        } else {
-            title.innerText = `Civilians Win! ${state.spy} loses`;
-            title.className = "text-4xl font-bold mb-4 text-green-400";
+                const system = `You are ${state.eliminated}. You are the SPY and you were caught. 
+                Based on the discussion history, guess the CIVILIAN secret word. 
+                Reply with ONLY the word. No sentences.`;
+                const user = `History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}`;
+                
+                const guess = await groqRequest(system, user, state.eliminated);
+                document.getElementById('ai-status').classList.add('hidden');
+                addLog(state.eliminated, `I think the word is... ${guess.toUpperCase()}!`);
+                
+                setTimeout(async () => await evaluateGuess(guess), 2000);
+            }
         }
-    } else {
-        title.innerText = `The Spy Won! ${state.spy} wins`;
-        title.className = "text-4xl font-bold mb-4 text-red-500";
-    }
 
-    state.gameResults.push({ 
-        winner: title.innerText, 
-        spy: state.spy, 
-        eliminated: state.eliminated 
-    });
-    
-    const summary = document.getElementById('vote-summary');
-    summary.innerHTML += Object.entries(state.votes).map(([voter, target]) => 
-        `<p><span class="text-slate-500">${voter}</span> voted for <span class="text-white font-bold">${target}</span></p>`
-    ).join('');
-}
+        async function handleUserInput() {
+            const val = document.getElementById('user-msg').value.trim();
+            if (!val) return;
+            document.getElementById('user-msg').value = '';
+            
+            if (state.phase === 'final-echo' && state.eliminated === 'Earl') {
+                addLog('Earl', `My final guess is: ${val}`);
+                await evaluateGuess(val);
+            } else if (state.phase === 'post-game') {
+                addLog('Earl', val);
+                state.history.push({name: 'Earl', text: val});
+            } else {
+                addLog('Earl', val);
+                state.history.push({name: 'Earl', text: val});
+                if (state.resolveUser) { state.resolveUser(); state.resolveUser = null; }
+            }
+        }
+
+        async function evaluateGuess(guess) {
+            const cleanGuess = guess.toLowerCase().trim();
+            const cleanTarget = state.words.civilian.toLowerCase().trim();
+            const isCorrect = cleanGuess === cleanTarget || cleanGuess.includes(cleanTarget);
+            await finishGame(isCorrect);
+        }
+
+        async function finishGame(spyGuessedCorrectly) {
+            showScreen('result-screen');
+            document.getElementById('res-civ').innerText = state.words.civilian;
+            document.getElementById('res-spy').innerText = state.words.spy;
+            const title = document.getElementById('res-title');
+            
+            if (state.eliminated === state.spy) {
+                if (spyGuessedCorrectly) {
+                    title.innerText = `Spy Stole the Win! ${state.spy} wins`;
+                    title.className = "text-4xl font-bold mb-4 text-orange-500";
+                    state.winner = "Spy";
+                    addLog("System", "The Spy was caught but guessed the word correctly!", true, 'vote-summary');
+                } else {
+                    title.innerText = `Civilians Win! ${state.spy} loses`;
+                    title.className = "text-4xl font-bold mb-4 text-green-400";
+                    state.winner = "Civilians";
+                }
+            } else {
+                title.innerText = `The Spy Won! ${state.spy} wins`;
+                title.className = "text-4xl font-bold mb-4 text-red-500";
+                state.winner = "Spy";
+            }
+
+            const civilians = state.players.filter(p => p !== state.spy);
+            const winners = state.winner === "Spy" ? [state.spy] : civilians;
+            const losers = state.winner === "Spy" ? civilians : [state.spy];
+            const tallies = {};
+            Object.values(state.votes).forEach(v => tallies[v] = (tallies[v] || 0) + 1);
+
+            const technicalSummary = `GAME DETAILS:
+            - Spy: ${state.spy}
+            - Civilians: ${civilians.join(', ')}
+            - Winner(s): ${winners.join(', ')}
+            - Loser(s): ${losers.join(', ')}
+            - Vote Tally: ${JSON.stringify(tallies)}`;
+
+            const narrativeSystem = "You are a social chronicler. Summarize the game discussion and hints in a roughly 200-token paragraph. Focus on the juicy drama—who accused whom, the suspicious hints, and the arguments. Be expressive.";
+            const narrativeUser = `Match History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}. Roles: Spy(${state.spy}), Civs(${civilians.join(',')}). Winner: ${state.winner}. Words: Civ(${state.words.civilian}), Spy(${state.words.spy})`;
+            
+            const narrativeSummary = await groqRequest(narrativeSystem, narrativeUser, 'main');
+
+            const memoryRecord = {
+                technical: technicalSummary,
+                narrative: narrativeSummary,
+                timestamp: new Date().toLocaleString()
+            };
+
+            let memories = JSON.parse(localStorage.getItem('spy_mind_memories') || "[]");
+            memories.push(memoryRecord);
+            if (memories.length > 5) memories.shift(); 
+            localStorage.setItem('spy_mind_memories', JSON.stringify(memories));
+
+            const summary = document.getElementById('vote-summary');
+            summary.innerHTML += Object.entries(state.votes).map(([voter, target]) => 
+                `<p><span class="text-slate-500">${voter}</span> voted for <span class="text-white font-bold">${target}</span></p>`
+            ).join('');
+        }
+
+        async function startPostGameDiscussion() {
+            showScreen('game-screen');
+            state.phase = 'post-game';
+            document.getElementById('phase-indicator').innerText = "Phase: Post Game Review";
+            document.getElementById('user-input-area').classList.remove('hidden');
+            document.getElementById('timer-box').classList.remove('hidden');
+            addLog("System", "Match Review Started. Discuss what happened!", true);
+            
+            let timeLeft = 600; 
+            if (state.discussionTimer) clearInterval(state.discussionTimer);
+            
+            state.discussionTimer = setInterval(async () => {
+                timeLeft -= 20;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('timer-box').innerText = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+                
+                if (timeLeft <= 0) { 
+                    clearInterval(state.discussionTimer); 
+                    addLog("System", "Discussion ended.", true);
+                } else {
+                    const talker = state.players.filter(p=>p!=='Earl')[Math.floor(Math.random()*4)];
+                    document.getElementById('ai-status').innerText = `${talker} is typing...`;
+                    document.getElementById('ai-status').classList.remove('hidden');
+
+                    const isSpy = (talker === state.spy);
+                    const myRole = isSpy ? "the Spy" : "a Civilian";
+                    
+                    const system = `The game is OVER. 
+                    Winner: ${state.winner}. You were ${myRole}. 
+                    Civ word: ${state.words.civilian}. Spy word: ${state.words.spy}. 
+                    Eliminated: ${state.eliminated}. 
+                    Discuss and review the game socially with the group. Argue, explain your hints, or talk about who played well. Be expressive.`;
+
+                    const user = `Match History: ${state.history.map(h=>h.name+": "+h.text).join(' | ')}. Votes: ${JSON.stringify(state.votes)}. Reply to the review chat.`;
+                    const msg = await groqRequest(system, user, talker);
+                    
+                    document.getElementById('ai-status').classList.add('hidden');
+                    addLog(talker, msg);
+                    state.history.push({name: talker, text: msg});
+                }
+            }, 20000); 
+        }
 
         function addLog(name, text, system = false, containerId = 'chat-log') {
             const log = document.getElementById(containerId);
