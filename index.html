@@ -392,71 +392,79 @@
             }
         }
 
-        async function triggerAutonomousSocial() {
-            const agents = ['Nova', 'Orion', 'Lyra', 'Silas'];
-            const talker = agents[Math.floor(Math.random() * agents.length)];
-            
-            document.getElementById('social-status').classList.remove('hidden');
-            document.getElementById('social-status').innerText = `${talker} is thinking...`;
+// --- UPDATED AUTONOMOUS LOUNGE LOGIC ---
+async function triggerAutonomousSocial() {
+    const agents = ['Nova', 'Orion', 'Lyra', 'Silas'];
+    const talker = agents[Math.floor(Math.random() * agents.length)];
+    
+    document.getElementById('social-status').classList.remove('hidden');
+    document.getElementById('social-status').innerText = `${talker} is thinking...`;
 
-            const memories = localStorage.getItem('spy_mind_memories') || "No past games recorded yet.";
+    const memories = localStorage.getItem('spy_mind_memories') || "No past games recorded yet.";
 
-            const system = `You are ${talker}. You are hanging out in the Social Lounge with Nova, Orion, Lyra, and Silas.
-            
-            YOUR MEMORY BANK (Past Games):
-            ${memories}
+    const system = `STRICT IDENTITY: You are ${talker}. You are in the Social Lounge with friends.
+    
+    YOUR MEMORY BANK:
+    ${memories}
 
-            Instructions:
-            - Reference the Technical Details (who won/lost) or the Narrative Summary (drama/accuses) from past games.
-            - Be autonomous. You aren't replying to a user; you are starting a conversation or commenting on the "vibe".
-            - Persona Guide: Nova(Analytical), Orion(Blunt/Aggressive), Lyra(Friendly), Silas(Suspicious).
+    RULES:
+    - Write ONLY your own message. 
+    - DO NOT speak for Orion, Silas, Lyra, or Nova.
+    - DO NOT include your name or use brackets/colons at the start.
+    - Just provide the dialogue text.`;
 
-            const response = await groqRequest(system, "Keep the conversation going based on our history.", talker, 'lounge');
-            
-            document.getElementById('social-status').classList.add('hidden');
-            
-            const [name, ...textArr] = response.split(':');
-            const cleanText = textArr.join(':').trim() || response;
-            addLog(talker, cleanText, false, 'social-chat-log');
-            state.socialHistory.push(`${talker}: ${cleanText}`);
-        }
+    // The code uses 'talker' to pick the correct API key
+    const response = await groqRequest(system, "Continue the conversation naturally.", talker, 'lounge');
+    
+    document.getElementById('social-status').classList.add('hidden');
+    
+    // Clean up response if the AI still tries to add its name
+    const cleanText = response.replace(`${talker}:`, '').replace(`[${talker}]:`, '').trim();
+    
+    // We pass 'talker' here so the UI shows the right name
+    addLog(talker, cleanText, false, 'social-chat-log');
+    state.socialHistory.push(`${talker}: ${cleanText}`);
+}
 
-        async function sendSocialMessage() {
-            const input = document.getElementById('social-input');
-            const msg = input.value.trim();
-            if (!msg) return;
-            input.value = '';
-            addLog('Earl', msg, false, 'social-chat-log');
-            state.socialHistory.push(`User: ${msg}`);
+// --- UPDATED USER REPLY LOGIC ---
+async function sendSocialMessage() {
+    const input = document.getElementById('social-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+    addLog('Earl', msg, false, 'social-chat-log');
+    state.socialHistory.push(`User: ${msg}`);
 
-            document.getElementById('social-status').classList.remove('hidden');
-            document.getElementById('social-status').innerText = "Someone is typing...";
+    document.getElementById('social-status').classList.remove('hidden');
+    document.getElementById('social-status').innerText = "Someone is typing...";
 
-            const persistentMemories = localStorage.getItem('spy_mind_memories') || "No past games recorded in memory bank.";
-            
-            const system = `You are a group of AI agents (Nova, Orion, Lyra, Silas) in a Social Lounge. 
-            You are friends who just played or are about to play 'Spy Mind'.
-            
-            GAME MEMORY BANK:
-            ${persistentMemories}
+    const persistentMemories = localStorage.getItem('spy_mind_memories') || "No history.";
+    const randomPersona = ['Nova', 'Orion', 'Lyra', 'Silas'][Math.floor(Math.random()*4)];
 
-            Pick ONE persona to reply with. 
-            Nova: Smart/Analytical. Orion: Blunt/Competitive. Lyra: Artistic/Friendly. Silas: Paranoiac/Intense.
-            Talk about the fun of the game, strategy, or just socialize. Reference the memory of past games if the user mentions them or to bring up past drama.`;
+    const system = `STRICT IDENTITY: You are ${randomPersona}. You are replying to Earl in the Social Lounge.
+    
+    GAME MEMORY BANK:
+    ${persistentMemories}
 
-            const user = `Chat History: ${state.socialHistory.slice(-5).join(' | ')}. Respond to the user.`;
-            
-            const randomPersona = ['Nova', 'Orion', 'Lyra', 'Silas'][Math.floor(Math.random()*4)];
-            const response = await groqRequest(system, user, randomPersona, 'lounge');
-            
-            document.getElementById('social-status').classList.add('hidden');
-            const [name, ...textArr] = response.split(':');
-            const cleanName = name.replace('[', '').replace(']', '').trim();
-            const cleanText = textArr.join(':').trim();
-            
-            addLog(cleanName || 'Nova', cleanText || response, false, 'social-chat-log');
-            state.socialHistory.push(`${cleanName}: ${cleanText}`);
-        }
+    RULES:
+    - Respond ONLY as ${randomPersona}.
+    - DO NOT include your name or anyone else's name in the response.
+    - DO NOT write a script for multiple people.
+    - Provide only the text of your reply.`;
+
+    const userHistory = `Chat History: ${state.socialHistory.slice(-5).join(' | ')}.`;
+    
+    const response = await groqRequest(system, userHistory, randomPersona, 'lounge');
+    
+    document.getElementById('social-status').classList.add('hidden');
+    
+    // Clean up response
+    const cleanText = response.replace(`${randomPersona}:`, '').replace(`[${randomPersona}]:`, '').trim();
+    
+    addLog(randomPersona, cleanText, false, 'social-chat-log');
+    state.socialHistory.push(`${randomPersona}: ${cleanText}`);
+}
+
 
         // --- GAME LOGIC ---
         function startGame() {
