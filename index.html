@@ -635,7 +635,7 @@ async function sendSocialMessage() {
                     const myWord = (talker === state.spy) ? state.words.spy : state.words.civilian;
                     const system = `You are ${talker}. 
                     STRICT IDENTITY: You are NOT Orion, Lyra, Silas, or Nova unless that is your name. Do NOT accuse yourself.
-                    SECRET WORD: ${myWord}. NEVER SAY THIS WORD OUT LOUD. Also try to actually understand others like if both of you have the same word, its up to you to trust it or not.
+                    SECRET WORD: ${myWord}. NEVER SAY THIS WORD OUT LOUD. Also do not merely vote someone just because he revealed the word that is same to your secret word try to analyze he might be crashing out because you didn't believe.
                     Role: ${talker === state.spy && state.isAware ? 'Aware Spy' : 'Player searching for the spy'}.
                     Logic: If your word ${myWord} doesn't seem to match others' hints, you might realize you're the spy. 
                     Be social. Accuse others based on their hints. Finish your sentence.`;
