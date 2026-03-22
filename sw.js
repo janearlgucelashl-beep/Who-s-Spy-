@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spymind-v2';
+const CACHE_NAME = 'spymind-v9';
 const ASSETS = [
   'index.html',
   'manifest.json'
